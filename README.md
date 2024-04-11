@@ -1,21 +1,32 @@
-tbd.
-<!--
 # Introduction
 
-Full project on Predicting the hospitalization urgency of COVID-19 patients using Python. I developed different classification models (kNN & logistic regression) to predict a patient's need for hospitality (target) based on several symptoms and evaluated them by various score metrics, e.g., accuracy, recall, F1-score.
+Full project on detecting credit card fraud using Python. I developed different classification models to predict whether a transaction is fraudaulent or not and evaluated them by various score metrics, including. precision, recall, and F1-score.
 
-Check the detailled machine learning algorithms out here: [Covid_Hospitalization_Classification](/)
+I used the following models throughout for detecting credit card fraud:
+- **Logistic Regression:** A baseline statistical model for estimating probabilities, widely used for binary classification.
+- **Shallow Neural Network:** A simpler architecture testing the hypothesis that less complexity can effectively capture data patterns.
+- **Random Forest:** Constructs multiple decision trees for classification, known for high accuracy and flexibility.
+- **Gradient Boosting Machine:** Uses sequential model building to correct errors, known for its predictive power.
+- **Support Vector Machine:** Known for its effectiveness in high-dimensional spaces, ideal for binary classification tasks.
+
+Check the detailled machine learning algorithms out here: [CreditCard_Fraud_Detection](/)
+
+This machine learning project is inspired by [Greg Hogg](https://www.youtube.com/watch?v=M_Cu7r9gik4&list=PLBYyBfw8A2fLqrrYW5PUWSm8NqVvzYzyc&index=11).
 
 ### Problem Setting:
-At the peak of the COVID-19 pandemic, hospital authorities had to make a call about who to admit and who to send home given the limited available resources. Our problem is to have a classifier that suggests whether a patient should be immediately admitted to the hospital or sent home.
+It is important that credit card companies are able to recognize fraudulent credit card transactions so that customers are not charged for items that they did not purchase.
 
 ### Goal:
-The goal of this project is to predict the urgency with which a COVID-19 patient will need to be admitted to the hospital from the time of onset of symptoms. The dataset contains some COVID-19 symptoms and demographic information. Notably, this dataset was collected in the peak of a COVID-19 wave and hence may have some errors and missing data.
-
-While this case study tries to mimic a real-life problem, it is important to note that this analysis is for educational purposes only.
+The goal of this project is to predict credit card fraud based on various features, such as time and amount.
 
 ### Background:
-This in-depth machine learning project resides on my **Capstone project** of the course *[Introduction to Data Science with Python](https://www.edx.org/learn/data-science/harvard-university-introduction-to-data-science-with-python)* taught by Professor Pavlos Protopapas, the Scientific Program director at the Harvard School of Engineering and Applied Sciences (SEAS).
+This dataset presents transactions that occurred in two days, where we have 492 frauds out of 284,807 transactions. The dataset is highly unbalanced, the positive class (frauds) account for 0.172% of all transactions.
+
+It contains only numerical input variables which are the result of a PCA transformation. Due to confidentiality issues, the original features and more background information about the data cannot be disclosed.
+
+Features V1, V2, … V28 are the principal components obtained with PCA, the only features which have not been transformed with PCA are 'Time' and 'Amount'. Feature 'Time' contains the seconds elapsed between each transaction and the first transaction in the dataset. The feature 'Amount' is the transaction Amount, this feature can be used for example-dependant cost-sensitive learning.
+
+Feature 'Class' is the response variable and it takes value 1 in case of fraud and 0 otherwise.
 
 ### Tools I Used:
 For my deep dive into the development of a classification machine learning model of the data, I harnessed the power of several key tools:
@@ -23,157 +34,166 @@ For my deep dive into the development of a classification machine learning model
 - **Python** 
 - **Jupyter Notebook**
 - **Sklearn**
-- **Seaborn**
+- **Tensorflow**
+- **Neural Networks**
+- **Robust Scaling**
+- **Classification Metrics**
 
 # Data Pre-Processing and EDA
-To clean and manipulate the COVID-19 data, I used the [Covid_Hospitalization_Classification](/covid.csv.rtf) file, filling missing data using sklearn's ```KNNImputer```, and run an explorative data analysis (EDA).
+To clean and manipulate the credit card data, I used the [CreditCard_Fraud_Data](/creditcard.csv) file, running some preliminary explorative data analysis (EDA) and applying robust scaling using sklearn's ```RobustScaler```.
 
-![AgeDistribution](assets/distribution_age_groups.png)
-
-*Bar chart visualizing the distribution of age groups needing hospital beds*
-
-
-![CoughCounts](assets/counts_of_cough_by_urgency.png)
-
-*Bar chart visualizing the counts of cough by urgency*
-
-Here's the breakdown of the COVID-19 EDA:
-- **Patients at risk:** The age group of 41-50 has the most urgent need for a hosphital bed.
-- **Feature Selection:** Fever is the most common symptom for urgent hospitalization, followed by cough.
-- **Feature Inspection:** Patients with no urgent need of hospitalization have cough as more common symptom than patients with no urgency.
+Here's the breakdown of the Credit Card Fraud Pre-Processing and EDA:
+- 492 transactions have been labeled as Class 1, i.e., fraudaulent transactions. The total number of transactions is 284807.
+- Transactions amount have wide spreads with min. of 0 and max. 25691.16
+- Relative fraudaulent cases = 0.1727%.
+- Robust scaling on amount and time feature.
 
 # Train / Test Split 
-To split the COVID-19 data, I used the ```train_test_split``` from from *sklearn.model_selection library*. The data is split itno training and a test set of 30% and a random state of 60 for reproducibility.
+To split the data, I used the ```train_test_split``` from from *sklearn.model_selection library*. The data is split into training, validation, and a test set.
 
 ```python
-df_train, df_test = train_test_split(df, test_size=0.3, random_state=60)
+train_lib, pre_test_lib = train_test_split(new_df, test_size = 0.2, random_state=50)
+test_lib, val_lib = train_test_split(pre_test_lib, test_size = 0.5, random_state=50)
+x_train, y_train = train_lib.iloc[:, :-1], train_lib.iloc[:, -1]
+x_test, y_test = test_lib.iloc[:, :-1], test_lib.iloc[:, -1]
+x_val, y_val = val_lib.iloc[:, :-1], val_lib.iloc[:, -1]
 ```
 
-# Prediction
+# Model Training & Evaluation
 
-**Classification Model**
-
-I use a K-neighbour classifier model with k = 10 to fit and predict the urgency of covid patients.
+**Logistic Regression Model**
 
 ```python
-model = KNeighborsClassifier(n_neighbors = 10)
-
-model.fit(X_train,y_train)
+logreg = LogisticRegression()
+logreg.fit(x_train, y_train)
 ```
+
+**Shallow Neural Network**
 
 ```python
-y_pred = model.predict(X_test)
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import InputLayer, Dense, BatchNormalization
+from tensorflow.keras.callbacks import ModelCheckpoint
 
+shallow_nn =  Sequential()
+shallow_nn.add(InputLayer((x_train.shape[1],)))
+shallow_nn.add(Dense(2, "relu"))
+shallow_nn.add(BatchNormalization())
+shallow_nn.add(Dense(1, "sigmoid")) # output probabilitly
+checkpoint = ModelCheckpoint("shallow_nn", save_best_only=True)
+shallow_nn.compile(optimizer="adam", loss = "binary_crossentropy", metrics=["accuracy"])
+shallow_nn.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=5, callbacks=checkpoint, batch_size=32)
 ```
+I also developed a function to predict and report classification metrics for neural networks trained and fitted throughout this project.
 
 ```python
-from sklearn.metrics import accuracy_score
-
-model_accuracy = model.score(X_test, y_test)
-print(f"Model Accuracy is {model_accuracy}")
+def neural_net_predictions(model, x, y):
+    nn_pred = (model.predict(x).flatten() > 0.5).astype(int)
+    clas_rep = classification_report(y, nn_pred, target_names=["Not Fraud", "Fraud"])
+    print(clas_rep)
+    
+neural_net_predictions(shallow_nn, x_val, y_val)
 ```
 
-The kNN-model accuracy is ~0.691.
+**Random Forest Classifier**
 
-# Evaluation
+```python
+rf = RandomForestClassifier(max_depth=2, n_jobs=-1)
+rf.fit(x_train, y_train)
+```
 
-Computing metrics other than accuracy to judge the efficacy of the model's predictions.
+**Random Forest Classifier**
 
-**Fit Other Models:**
-- Classification model using a kNN classfier, with k = 7
-- Logistic model using regression, with c = 0.01, where c = inverse of regularization strength
+```python
+rf = RandomForestClassifier(max_depth=2, n_jobs=-1)
+rf.fit(x_train, y_train)
+```
 
-**Evaluation of the New Models:**
-Creating a dictionary with different metric scores:
-- Accuracy
-- Recall
-- Specificity
-- Precision
-- F1-score
+**Random Forest Classifier**
+
+```python
+gbc = GradientBoostingClassifier(n_estimators=50, learning_rate=1.0, max_depth=1, random_state=0)
+gbc.fit(x_train, y_train)
+```
+
+**Support Vector Machine**
+
+```python
+svc = LinearSVC(class_weight="balanced")
+svc.fit(x_train, y_train)
+```
+
+### Model Classification Overview
+
+| Model          | Class     | Precision | Recall | F1-Score | Accuracy | Support |
+|----------------|-----------|-----------|--------|----------|----------|---------|
+| Support Vector | Fraud     | 0.66      | 0.72   | 0.69     | 1.00     | 43      |
+|                | Not Fraud | 1.00      | 1.00   | 1.00     | 1.00     | 28438   |
+| Gradient Boost | Fraud     | 0.66      | 0.63   | 0.64     | 1.00     | 43      |
+|                | Not Fraud | 1.00      | 1.00   | 1.00     | 1.00     | 28438   |
+| Shallow NN     | Fraud     | 0.61      | 0.65   | 0.63     | 1.00     | 43      |
+|                | Not Fraud | 1.00      | 1.00   | 1.00     | 1.00     | 28438   |
+| Logistic Reg.  | Fraud     | 0.79      | 0.51   | 0.62     | 1.00     | 43      |
+|                | Not Fraud | 1.00      | 1.00   | 1.00     | 1.00     | 28438   |
+| Random Forest  | Fraud     | 0.74      | 0.47   | 0.57     | 1.00     | 43      |
+|                | Not Fraud | 1.00      | 1.00   | 1.00     | 1.00     | 28438   |
 
 
-### Classification Model Performance Comparison
+# Undersampling Method
 
-The following table summarizes the performance of the two kNN classifiers with different values of \(k\) (7 and 10) and a Logistic Regression model based on various classification metrics.
+The data set is highly imbalanced with fraudulent transactions being significantly rarer than legitimate ones (284315 vs. 492 transactions). This imbalance can lead to biased models that favor the majority class and overlook the minority class (fraudulent transactions).
 
-| Classification Metric | kNN Classification (k=7) | kNN Classification (k=10) | Logistic Regression |
-|-----------------------|--------------------------|---------------------------|---------------------|
-| Accuracy              | 0.6910                   | 0.6811                    | 0.6079              |
-| Recall                | 0.6525                   | 0.7376                    | 0.7163              |
-| Specificity           | 0.7250                   | 0.6313                    | 0.5125              |
-| Precision             | 0.6765                   | 0.6380                    | 0.5642              |
-| F1-score              | 0.6643                   | 0.6842                    | 0.6313              |
+```python
+balanced_df = pd.concat([frauds, not_frauds.sample(len(frauds), random_state=1)])
+balanced_df["Class"].value_counts()
+```
+By implementing undersampling, we reduce the size of the majority class, balancing the dataset and enhancing the model's ability to detect fraud more accurately and efficiently (492 vs. 492 transactions for fraudaulent and non-fraudaulent transactions).
+
+I rerun a train and test split according to the configuration above. In addition, I re-trained new models using the machine learning algorithms like above, including an additional shallow neural network.
+
+### Model Classification Overview (Undersampled Data)
+
+| Balanced Model                         | Class     | Precision | Recall | F1-Score | Accuracy | Support |
+|-------------------------------|-----------|-----------|--------|----------|----------|---------|
+| Logistic Regression (LogReg)  | Not Fraud | 0.95      | 0.96   | 0.95     | 0.95     | 54      |
+|                               | Fraud     | 0.95      | 0.93   | 0.94     | 0.95     | 45      |
+| Shallow Neural Network (1)    | Not Fraud | 0.83      | 1.00   | 0.91     | 0.89     | 54      |
+|                               | Fraud     | 1.00      | 0.76   | 0.86     | 0.89     | 45      |
+| Shallow Neural Network (2)    | Not Fraud | 0.84      | 0.96   | 0.90     | 0.88     | 54      |
+|                               | Fraud     | 0.95      | 0.78   | 0.85     | 0.88     | 45      |
+| Random Forest Classifier      | Not Fraud | 0.85      | 0.98   | 0.91     | 0.90     | 54      |
+|                               | Fraud     | 0.97      | 0.80   | 0.88     | 0.90     | 45      |
+| Gradient Boosting Classifier  | Not Fraud | 0.88      | 0.93   | 0.90     | 0.89     | 54      |
+|                               | Fraud     | 0.90      | 0.84   | 0.87     | 0.89     | 45      |
+| Support Vector Machine (SVM)  | Not Fraud | 0.93      | 0.96   | 0.95     | 0.94     | 54      |
+|                               | Fraud     | 0.95      | 0.91   | 0.93     | 0.94     | 45      |
+
+
+# Testing Best Model on Holdout Set
+
+In our quest to find the optimal model for credit card fraud detection, we focus on the F1-score for "Fraud" due to its holistic view combining precision and recall. Through our analysis:
+
+- **Balanced dataset** is prioritized for evaluation due to its fair class representation.
+- Among all models, **Logistic Regression (LogReg)** stands out with the highest F1-score of **0.94** for detecting fraud.
+
+```python
+# predict on unseen holdout data (y_test_bal, x_test_bal)
+print(classification_report(y_test_bal, logreg_bal.predict(x_test_bal), target_names=["Not Fraud", "Fraud"]))
+```
+### Plot Credit Card Detection Model Effectiveness
+
+![ModelEffectiveness](assets/model_effectiveness.png)
+
+*Classification plot evaluating the Logistic Regression model on the holdout set*
+
 
 ### Results & Interpretation
 
-- The results show a notable improvement in the Accuracy and Specificity for the kNN classifier with \(k=7\), suggesting that this model now outperforms the other models in correctly identifying both positive and negative classes.
-- The Recall has decreased for the kNN classifier with \(k=7\), but its significant improvement in Specificity and Precision indicates a more balanced performance between identifying true positives and true negatives.
-- Logistic Regression remains the least accurate model, but its Recall and F1-score suggest it is still relatively good at identifying true positives and balancing precision and recall.
-- Comparing the F1-scores, we see that the kNN classifier with \(k=7\) has a higher score than Logistic Regression, indicating a better overall balance of precision and recall, a critical factor in many classification tasks.
-
-The improvement in the kNN classifier with \(k=7\)'s performance suggests that parameter tuning and model selection should be iterative processes, taking into account the full range of performance metrics.
-
-In general, the choice between these models depend on the specific application and whether the emphasis is on reducing false positives (higher precision) or false negatives (higher recall).
-
-![EvaluationMetrics](assets/evaluation_metrics_comparison.png)
-
-*Bar charts comparing the model performance metrics*
-
-# Selection of Best Metrics
-
-It is not clear how to choose which metric(s) to use to pick the best model. For this reason, I calculate the AUC scores and plot the ROC curves for both the kNN (k=7) and the logistic regression models and use that information to decide which model is ideal for each of the scenarios.
-
-### Prediction of Probabilities
-
-I predict the probabiities for the positive class on the test data using the ```predict_proba``` method. 
-
-```python
-y_pred_knn = knn_model.predict_proba(X_test)[:, 1]
-
-y_pred_logreg = log_model.predict_proba(X_test)[:,1]
-```
-
-To optimize model performance, the ```get_thresholds``` function evaluates a range of thresholds tailored to the model's predicted probabilities, discarding evenly spaced values that don't impact classification outcomes. This ensures only relevant threshold adjustments are considered, enhancing model accuracy.
-
-```python
-def get_thresholds(y_pred_proba):
-    unique_probas = np.unique(y_pred_proba)
-    unique_probas_sorted = np.sort(unique_probas)[::-1]
-    thresholds = np.insert(unique_probas_sorted, 0, 1.1)
-    thresholds = np.append(thresholds, 0)
-    return thresholds
-```
-
-```python
-knn_thresholds = get_thresholds(y_pred_knn)
-
-logreg_thresholds = get_thresholds(y_pred_logreg)
-```
-### Plotting ROC
-
-We then calculate the **False Posotive Rate (FPR)** and the **True Posotive Rate (TPR)** and plott the TPR agaisnt the FPR at various threshod levels.
-
-![ROC_Plot](assets/roc_plot.png)
-
-*ROC plot of the two models evaluated*
-
-# COVID-19 Scenario Analysis
-
-The choice of a threshold in ROC curve interpretation is heavily dependent on the specific application and its tolerance for false positives versus false negatives. This concept is illustrated through hypothetical scenarios involving different countries' responses to the Covid-19 pandemic, each with unique constraints to optimize their strategies:
-- Brazil aims to minimize bad press with a combined TPR and FPR of less than 0.5,
-- Germany focuses on reducing fatalities by maintaining a TPR between 0.8 and 0.9, and
-- India prioritizes managing limited hospital beds with a combined TPR and FPR of up to 1.
-
-These examples, while not reflective of actual policies, demonstrate how application-specific needs dictate the selection of the optimal classifier and threshold settings.
-
-![ROC_Scenarios](assets/roc_scenarios.png)
-
-*ROC plot on various scenarios*
-
-### Choice of Classifier
-- BRAZIL : Logistic regression with a high threshold
-- GERMANY : Logistic regression with a low threshold
-- INDIA : kNN classifier with a moderate threshold
+- Analyzed a dataset of 284,807 transactions, identifying 492 (0.1727%) as fraudulent through robust scaling and analysis.
+- Applied robust scaling on 'amount' and 'time' features to normalize the data, enhancing model accuracy.
+- Utilized a Logistic Regression model, achieving an overall accuracy of 0.98 in classifying transactions as fraudulent or legitimate.
+- Achieved perfect precision (1.00) for legitimate transactions and high precision (0.96) for fraudulent transactions, minimizing false positives.
+- The model demonstrated exceptional performance with F1-Scores of 0.98 for both classes, indicating a balanced and effective approach to fraud detection.
 
 
 # What I Learned
@@ -181,19 +201,24 @@ These examples, while not reflective of actual policies, demonstrate how applica
 During my capstone ML project on predicting the hospitalization urgency of COVID-19 patients, I undertook several critical steps and learned valuable lessons that enhanced my understanding and application of machine learning techniques.
 
 ### Key Learnings and Achievements:
-- **Model Development:** I developed both kNN and logistic regression models to predict hospitalization urgency based on COVID-19 symptoms.
-- **Evaluation Metrics:** These models were rigorously evaluated using metrics such as accuracy, recall, and F1-score, allowing me to gauge their effectiveness comprehensively.
-- **Data Handling:** I honed my skills in handling missing data and conducting exploratory data analysis (EDA), which are fundamental aspects of preparing data for machine learning models.
-- **Model Selection:** The project emphasized the importance of careful model selection based on performance metrics, ensuring the chosen models were well-suited for the task at hand.
-- **Threshold Tailoring:** A significant insight from this project was the necessity of tailoring threshold selection to specific scenarios. This was illustrated through hypothetical COVID-19 policy responses from countries like Brazil, Germany, and India.
-- **Practical Application:** The use of ROC curves and the emphasis on precision in model performance highlighted the practical applications of my work, demonstrating how machine learning can inform real-world decisions and policies.
+1. **Diverse Model Application**
+   - Utilized a variety of models (Logistic Regression, Shallow Neural Networks, Random Forest, Gradient Boosting Machine, Support Vector Machine) to understand their unique strengths and limitations in detecting credit card fraud in an imbalanced dataset.
+2. **Importance of Data Pre-processing**
+   - Highlighted the critical role of data normalization through robust scaling on 'amount' and 'time' features, significantly improving the models' accuracy by preparing the data effectively for the analysis.
+3. **Challenges of Imbalanced Data**
+   - Addressed the challenges of working with highly imbalanced data, employing undersampling to balance the dataset, which enhanced the models' ability to accurately and efficiently detect fraudulent transactions.
+4. **Evaluation Metric Selection**
+   - Emphasized the importance of using precision, recall, and F1-score as primary metrics for evaluating the models' performance in imbalanced classification tasks, offering a nuanced view of their effectiveness beyond simple accuracy.
+5. **Model Optimization and Selection**
+   - The iterative process of training, evaluation, and comparison led to the selection of Logistic Regression based on its high F1-score for detecting fraud, showcasing the importance of model optimization in achieving superior performance.
+
+These learnings underscore the complexity of fraud detection and the nuanced approach required in model selection and data handling to develop an effective fraud detection system.
+
 
 ### Insights
 
-This capstone project illuminated the complexity and criticality of **machine learning** in healthcare, particularly in crisis situations like the COVID-19 pandemic. Through the development and evaluation of kNN and logistic regression models, the project showcased the importance of data preprocessing, exploratory data analysis, and the nuanced selection of classification models. The analysis demonstrated that different scenarios require tailored approaches in model selection and threshold setting to balance the trade-offs between false positives and negatives, reflecting real-world decision-making challenges.
+This project shed light on the intricate dynamics of detecting credit card fraud using **machine learning** models. Through rigorous experimentation with Logistic Regression, Shallow Neural Networks, Random Forest, Gradient Boosting Machine, and Support Vector Machine, the project highlighted the critical importance of data pre-processing, the challenge of managing imbalanced datasets, and the strategic significance of choosing the right model. Each model brought unique insights into the fraud detection process, underscoring the need for a nuanced approach in model selection. The deployment of different models demonstrated how tailored data science solutions could significantly enhance the detection of fraudulent activities, making evident the necessity of precision, recall, and F1-score as holistic measures of model performance.
 
 ### Closing Thoughts
 
-The project not only reinforced my technical skills in machine learning and data science but also emphasized ethical and practical considerations in applying these technologies to public health. It served as a powerful reminder of the potential impact of data science in informing policy and operational decisions during health emergencies, highlighting the importance of adaptability, precision, and contextual understanding in developing solutions that cater to diverse and dynamic challenges.
-
--->
+The journey through this project not only honed my technical prowess in leveraging machine learning for fraud detection but also deepened my understanding of the ethical and practical dimensions inherent in the deployment of such technologies in the financial domain. It highlighted the critical role of data scientists in developing robust, ethical, and effective solutions that can protect consumers and financial institutions alike from the perils of fraud. This project served as a testament to the power of machine learning in navigating the complexities of modern financial ecosystems, emphasizing the need for continuous innovation, ethical considerations, and a deep understanding of the domain to craft solutions that address real-world challenges effectively.
