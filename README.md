@@ -102,14 +102,7 @@ rf = RandomForestClassifier(max_depth=2, n_jobs=-1)
 rf.fit(x_train, y_train)
 ```
 
-**Random Forest Classifier**
-
-```python
-rf = RandomForestClassifier(max_depth=2, n_jobs=-1)
-rf.fit(x_train, y_train)
-```
-
-**Random Forest Classifier**
+**Gradient Boosting Classifier**
 
 ```python
 gbc = GradientBoostingClassifier(n_estimators=50, learning_rate=1.0, max_depth=1, random_state=0)
