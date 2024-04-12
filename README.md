@@ -198,8 +198,6 @@ print(classification_report(y_test_bal, logreg_bal.predict(x_test_bal), target_n
 
 # What I Learned
 
-During my capstone ML project on predicting the hospitalization urgency of COVID-19 patients, I undertook several critical steps and learned valuable lessons that enhanced my understanding and application of machine learning techniques.
-
 ### Key Learnings and Achievements:
 1. **Diverse Model Application**
    - Utilized a variety of models (Logistic Regression, Shallow Neural Networks, Random Forest, Gradient Boosting Machine, Support Vector Machine) to understand their unique strengths and limitations in detecting credit card fraud in an imbalanced dataset.
@@ -214,6 +212,7 @@ During my capstone ML project on predicting the hospitalization urgency of COVID
 
 These learnings underscore the complexity of fraud detection and the nuanced approach required in model selection and data handling to develop an effective fraud detection system.
 
+# Conclusion
 
 ### Insights
 
